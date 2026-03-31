@@ -72,7 +72,7 @@ pokemon_data = None
 pokemon_sprite = None
 sprite_task = None
 sprite_fetching = False
-shiny = True
+shiny = False
 
 
 def get_wifi_details():
