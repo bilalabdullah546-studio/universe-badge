@@ -16,7 +16,7 @@ import sys
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-BASE_URL = "https://wsrv.nl/?url=https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{path}{id}.png&w=64&h=64&output=png"
+BASE_URL = "https://wsrv.nl/?url=https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{path}{id}.png&w=80&h=80&output=png"
 MAX_POKEMON = 151
 WORKERS = 10
 

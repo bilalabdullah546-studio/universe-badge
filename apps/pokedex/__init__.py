@@ -45,7 +45,7 @@ TYPE_COLOURS = {
 small_font = PixelFont.load("/system/assets/fonts/ark.ppf")
 large_font = PixelFont.load("/system/assets/fonts/absolute.ppf")
 
-SPRITE_URL = "https://wsrv.nl/?url=https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{path}{id}.png&w=64&h=64&output=png"
+SPRITE_URL = "https://wsrv.nl/?url=https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{path}{id}.png&w=80&h=80&output=png"
 STAT_NAMES = ["hp", "atk", "def", "sp.a", "sp.d", "spd"]
 MAX_POKEMON = 151
 
@@ -67,7 +67,7 @@ ticks_start = None
 WIFI_TIMEOUT = 30
 
 # State
-current_id = 4  # Start with Charmander
+current_id = 0  # Start with KEEFYMON
 pokemon_data = None
 pokemon_sprite = None
 sprite_task = None
@@ -239,35 +239,40 @@ def draw_main_view():
         center_text("POKEDEX", -2)
 
     # Sprite area (centred in left section)
+    # Sprite centred in left column (0-65 x, 15-107 y)
+    sprite_cx = 32
+    sprite_cy = 65
     if pokemon_sprite:
-        # Gentle floating bob
-        bob = math.sin(io.ticks / 400) * 3
-        sx = 2
-        sy = int(28 + bob)
+        bob = math.sin(io.ticks / 400) * 2
+        sx = 0
+        sy = int(sprite_cy - 40 + bob)
         screen.blit(pokemon_sprite, sx, sy)
 
-        # Shiny sparkles
+        # Shiny sparkles — alternating gold and white
         if shiny:
             sparkle = shapes.squircle(0, 0, 3, 2)
-            for i in range(5):
-                # Each sparkle orbits at different speed/phase
-                t = io.ticks / (600 + i * 150)
-                phase = i * 1.257  # ~2*pi/5
-                radius = 20 + i * 5
-                cx = 34 + math.cos(t + phase) * radius
-                cy = 58 + bob + math.sin(t + phase) * (radius * 0.6)
-                # Pulse alpha
-                alpha = int(abs(math.sin(t * 2 + phase)) * 200) + 55
-                screen.brush = brushes.color(248, 220, 48, alpha)
-                scale = 0.4 + abs(math.sin(t * 3 + phase)) * 0.8
-                sparkle.transform = Matrix().translate(cx, cy).rotate(t * 80 + i * 45).scale(scale)
-                screen.draw(sparkle)
+            for i in range(6):
+                t = io.ticks / (500 + i * 130)
+                phase = i * 1.047
+                angle = t * 0.4 + phase
+                r = 20 + i * 5
+                cx = sprite_cx + math.cos(angle) * r
+                cy = sprite_cy + bob + math.sin(angle) * (r * 0.65)
+                pulse = math.sin(t * 2.5 + phase * 2)
+                if pulse > 0.1:
+                    alpha = int(pulse * 200) + 55
+                    if i % 2 == 0:
+                        screen.brush = brushes.color(248, 220, 48, alpha)
+                    else:
+                        screen.brush = brushes.color(255, 255, 255, alpha)
+                    s = 0.3 + pulse * 0.7
+                    sparkle.transform = Matrix().translate(cx, cy).rotate(t * 50 + i * 60).scale(s)
+                    screen.draw(sparkle)
     else:
-        # Loading spinner
         screen.brush = faded
         squircle = shapes.squircle(0, 0, 8, 4)
         for i in range(3):
-            squircle.transform = Matrix().translate(34, 58).rotate(
+            squircle.transform = Matrix().translate(sprite_cx, sprite_cy).rotate(
                 (io.ticks + i * 5000) / 40).scale(1 + i / 1.5)
             screen.draw(squircle)
 
@@ -286,11 +291,13 @@ def draw_main_view():
             draw_type_badge(t, badge_x, 17)
             badge_x -= 3  # gap between badges
 
-        # Height / Weight (gap after type badge)
+        # Height / Weight — right-aligned
         screen.brush = faded
         h_m = pokemon_data["height"] / 10
         w_kg = pokemon_data["weight"] / 10
-        screen.text("{:.1f}m {:.1f}kg".format(h_m, w_kg), rx, 30)
+        hw_text = "{:.1f}m {:.1f}kg".format(h_m, w_kg)
+        hw_w, _ = screen.measure_text(hw_text)
+        screen.text(hw_text, 158 - hw_w, 30)
 
         # Stats
         y_start = 40
@@ -346,16 +353,16 @@ def update():
         center_text("Re-flash badge files", 65)
         return
 
-    # Input handling
+    # Input handling (0 = KEEFYMON, 1-151 = Gen 1)
     changed = False
     if io.BUTTON_C in io.pressed:
-        current_id = (current_id % MAX_POKEMON) + 1
+        current_id = (current_id + 1) % (MAX_POKEMON + 1)
         changed = True
     if io.BUTTON_A in io.pressed:
-        current_id = ((current_id - 2) % MAX_POKEMON) + 1
+        current_id = (current_id - 1) % (MAX_POKEMON + 1)
         changed = True
     if io.BUTTON_B in io.pressed:
-        current_id = random.randint(1, MAX_POKEMON)
+        current_id = random.randint(0, MAX_POKEMON)
         changed = True
 
     # Toggle shiny with UP button
