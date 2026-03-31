@@ -1,0 +1,4 @@
+# Sprites are copyrighted by Nintendo/Game Freak/The Pokemon Company
+# Fetch them with: python3 fetch_sprites.py
+sprites/
+shiny/

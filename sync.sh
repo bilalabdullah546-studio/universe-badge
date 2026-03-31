@@ -10,7 +10,7 @@ if [ ! -d "$BADGE_VOLUME" ]; then
     exit 1
 fi
 
-echo "Syncing to badge..."
+echo "Syncing apps to badge..."
 rsync -av --delete \
     --exclude='.git' \
     --exclude='.gitignore' \
@@ -19,8 +19,26 @@ rsync -av --delete \
     --exclude='sync.sh' \
     --exclude='secrets.py.example' \
     --exclude='.DS_Store' \
-    ./ "$BADGE_VOLUME/"
+    --exclude='CLAUDE.md' \
+    --exclude='fetch_sprites.py' \
+    --exclude='sprites/' \
+    --exclude='shiny/' \
+    ./apps/ "$BADGE_VOLUME/apps/"
+
+# Sync sprites if they exist locally
+if [ -d "./apps/pokedex/sprites" ]; then
+    echo "Syncing normal sprites..."
+    rsync -av ./apps/pokedex/sprites/ "$BADGE_VOLUME/sprites/"
+fi
+
+if [ -d "./apps/pokedex/shiny" ]; then
+    echo "Syncing shiny sprites..."
+    rsync -av ./apps/pokedex/shiny/ "$BADGE_VOLUME/shiny/"
+fi
+
+# Clean macOS resource forks
+dot_clean -m "$BADGE_VOLUME/" 2>/dev/null
 
 echo ""
-echo "Sync complete. Don't forget to check secrets.py on the badge."
-echo "Eject with: diskutil eject $BADGE_VOLUME"
+echo "Sync complete."
+echo "Eject with: diskutil unmountDisk force $BADGE_VOLUME"
