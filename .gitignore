@@ -1,0 +1,10 @@
+secrets.py
+*.pyc
+__pycache__/
+user_data.json
+contrib_data.json
+avatar.png
+.fseventsd/
+.Trashes
+.Spotlight-V100
+.DS_Store
