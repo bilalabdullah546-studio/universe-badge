@@ -32,13 +32,28 @@ def fetch_sprite(pokemon_id, output_dir, shiny=False):
         return pokemon_id, shiny, True
 
     url = BASE_URL.format(id=pokemon_id, path=path)
+    temp_path = out_path + ".part"
     try:
         result = subprocess.run(
-            ["curl", "-sf", url, "-o", out_path],
+            ["curl", "-sf", url, "-o", temp_path],
             capture_output=True, timeout=30,
         )
-        return pokemon_id, shiny, result.returncode == 0
+        if result.returncode != 0:
+            try:
+                os.remove(temp_path)
+            except FileNotFoundError:
+                pass
+            return pokemon_id, shiny, False
+
+        # Publish only complete downloads; a failed curl must not leave a
+        # partial final file that a later run would mistake for a valid sprite.
+        os.replace(temp_path, out_path)
+        return pokemon_id, shiny, True
     except Exception:
+        try:
+            os.remove(temp_path)
+        except FileNotFoundError:
+            pass
         return pokemon_id, shiny, False
 
 
