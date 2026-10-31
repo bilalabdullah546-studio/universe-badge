@@ -66,6 +66,10 @@ class ScrollList:
             self._held_cache[button] = 0
 
     def on_button_up(self):
+        if not self.content_items:
+            self.index = None
+            return
+
         if self.index is None:
             self.index = len(self.content_items) - 1
         else:
@@ -75,7 +79,11 @@ class ScrollList:
                 self.index = max(0, self.index - 1)
 
     def on_button_down(self):
-        if self.index == None:
+        if not self.content_items:
+            self.index = None
+            return
+
+        if self.index is None:
             self.index = 0
         else:
             if self.wrap_around:
