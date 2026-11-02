@@ -79,16 +79,21 @@ def get_wifi_details():
     global WIFI_PASSWORD, WIFI_SSID
     if WIFI_SSID is not None:
         return True
+
+    sys.path.insert(0, "/")
     try:
-        sys.path.insert(0, "/")
         import secrets
-        sys.path.pop(0)
         WIFI_SSID = getattr(secrets, "WIFI_SSID", None)
         WIFI_PASSWORD = getattr(secrets, "WIFI_PASSWORD", None)
         del secrets
     except ImportError:
         WIFI_PASSWORD = None
         WIFI_SSID = None
+    finally:
+        # The Pokedex retries this import on every update while config is missing.
+        # Always remove the temporary root path, including on failed imports.
+        sys.path.pop(0)
+
     return WIFI_SSID is not None
 
 
