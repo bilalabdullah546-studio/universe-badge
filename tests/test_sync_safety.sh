@@ -19,6 +19,7 @@ STUB
 cat > "$TMP/bin/dot_clean" <<'STUB'
 #!/bin/bash
 printf 'dot_clean %s\n' "$*" >> "$CALL_LOG"
+exit 1
 STUB
 chmod +x "$TMP/bin/rsync" "$TMP/bin/dot_clean"
 
@@ -47,6 +48,7 @@ printf 'APPLY\n' | "$SYNC_SCRIPT" --apply > "$TMP/apply.out"
 grep -q '^rsync ' "$CALL_LOG" || fail "confirmed --apply did not invoke rsync"
 if grep -q '^rsync .*--dry-run' "$CALL_LOG"; then fail "confirmed --apply unexpectedly used dry-run"; fi
 grep -q '^dot_clean ' "$CALL_LOG" || fail "confirmed --apply did not run dot_clean"
+grep -q 'Sync complete\.' "$TMP/apply.out" || fail "best-effort dot_clean failure interrupted the sync"
 
 # A directory without the expected apps folder must be rejected before rsync.
 mkdir -p "$TMP/unexpected"
