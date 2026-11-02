@@ -16,6 +16,7 @@ APP_FUNCTIONS = {
     "wifi": (REPO_ROOT / "apps" / "wifi" / "__init__.py", "load_wifi_credentials"),
     "stocks": (REPO_ROOT / "apps" / "stocks" / "__init__.py", "get_wifi_credentials"),
     "weather": (REPO_ROOT / "apps" / "weather" / "__init__.py", "get_wifi_credentials"),
+    "pokedex": (REPO_ROOT / "apps" / "pokedex" / "__init__.py", "get_wifi_details"),
 }
 
 
