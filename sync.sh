@@ -84,8 +84,8 @@ if [ -d "./apps/pokedex/shiny" ]; then
 fi
 
 if [ "$MODE" = "--apply" ]; then
-    # Clean macOS resource forks only after an explicitly confirmed write.
-    dot_clean -m "$BADGE_VOLUME/" 2>/dev/null
+    # Preserve the previous best-effort cleanup behavior after a confirmed write.
+    dot_clean -m "$BADGE_VOLUME/" 2>/dev/null || true
     echo "Sync complete."
 else
     echo "Dry run complete; no files were changed."
