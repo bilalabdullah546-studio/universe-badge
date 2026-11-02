@@ -51,12 +51,12 @@ use_mph = True  # Wind speed in mph (true) or kmh (false)
 def get_wifi_credentials():
     """Load WiFi credentials and optional weather location from secrets.py"""
     global WIFI_PASSWORD, WIFI_SSID, WEATHER_LOCATION
-    
+
     if WIFI_SSID is not None:
         return True
-    
+
+    sys.path.insert(0, "/")
     try:
-        sys.path.insert(0, "/")
         from secrets import WIFI_PASSWORD, WIFI_SSID
         # Try to import optional weather location override
         try:
@@ -64,13 +64,15 @@ def get_wifi_credentials():
             WEATHER_LOCATION = WL
         except ImportError:
             pass
-        sys.path.pop(0)
     except ImportError:
         WIFI_PASSWORD = None
         WIFI_SSID = None
-    
-    return WIFI_SSID is not None
+    finally:
+        # This runs on every update while configuration is missing.
+        # Always remove the temporary root path on success or failure.
+        sys.path.pop(0)
 
+    return WIFI_SSID is not None
 
 def wlan_start():
     """Start WiFi connection"""
