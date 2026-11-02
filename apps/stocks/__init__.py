@@ -48,20 +48,22 @@ auto_refresh = True
 
 def get_wifi_credentials():
     global WIFI_PASSWORD, WIFI_SSID
-    
+
     if WIFI_SSID is not None:
         return True
-    
+
+    sys.path.insert(0, "/")
     try:
-        sys.path.insert(0, "/")
         from secrets import WIFI_PASSWORD, WIFI_SSID
-        sys.path.pop(0)
     except ImportError:
         WIFI_PASSWORD = None
         WIFI_SSID = None
-    
-    return WIFI_SSID is not None
+    finally:
+        # This runs on every update while configuration is missing.
+        # Always remove the temporary root path on success or failure.
+        sys.path.pop(0)
 
+    return WIFI_SSID is not None
 
 def wlan_start():
     global wlan, ticks_start, connected, WIFI_PASSWORD, WIFI_SSID
