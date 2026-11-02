@@ -53,7 +53,7 @@ wlan_security_types = {
     7: "WPA2/WPA3-PSK",
     4194304: "WPA2-PSK",          # Alternative value
     4194308: "WPA2-PSK (TKIP+CCMP)",  # Common configuration
-    4194310: "WPA3-PSK (SAE)"     # Common configuration
+    4194310: "WPA3-PSK (SAE)"     # WPA3 with SAE
 }
 
 def load_wifi_credentials():
@@ -69,21 +69,20 @@ def load_wifi_credentials():
         GITHUB_USERNAME = None
         return False
     finally:
-        # This runs on both success and failure so repeated UI updates
-        # do not accumulate duplicate entries in sys.path.
+        # The Wi-Fi screen calls this on every update. Always remove the
+        # temporary root path, including when secrets.py is missing.
         sys.path.pop(0)
 
     return True
 
-
 def check_connection_status():
     """Check if currently connected to WiFi and manage connection attempts"""
     global wlan, channel, connection_status, connecting, connection_start_time, ip_address, last_attempt_time, security
-
+    
     if wlan is None:
         wlan = network.WLAN(network.STA_IF)
         wlan.active(True)
-
+    
     # Check if we're already connected
     if wlan.isconnected():
         connection_status = "Connected"
@@ -92,7 +91,7 @@ def check_connection_status():
         channel = wlan.config('channel')
         security = wlan_security_types.get(wlan.config('security'), 'Unknown')
         return True
-
+    
     # If not connecting yet, start connection
     if not connecting and WIFI_SSID and WIFI_PASSWORD:
         # Check if we should retry (after failed attempt)
@@ -103,7 +102,7 @@ def check_connection_status():
                 remaining = int(RETRY_DELAY - elapsed_since_last)
                 connection_status = f"Retry in {remaining}s"
                 return False
-
+        
         # Start connection attempt
         connecting = True
         connection_start_time = io.ticks
@@ -111,11 +110,11 @@ def check_connection_status():
         wlan.connect(WIFI_SSID, WIFI_PASSWORD)
         print(f"Attempting to connect to {WIFI_SSID}...")
         return False
-
+    
     # If we're in the process of connecting
     if connecting:
         elapsed = (io.ticks - connection_start_time) / 1000
-
+        
         # Check if connected
         if wlan.isconnected():
             connection_status = "Connected"
@@ -125,7 +124,7 @@ def check_connection_status():
             security = wlan_security_types.get(wlan.config('security'), 'Unknown')
             print("WiFi connected successfully!")
             return True
-
+        
         # Check if timeout
         if elapsed >= WIFI_TIMEOUT:
             connection_status = "Connection failed"
@@ -133,12 +132,12 @@ def check_connection_status():
             last_attempt_time = io.ticks
             print("WiFi connection timeout")
             return False
-
+        
         # Still connecting
         dots = "." * ((int(io.ticks / 500) % 3) + 1)
         connection_status = f"Connecting{dots}"
         return False
-
+    
     return False
 
 
@@ -153,26 +152,26 @@ def wrap_text(text, x, y, max_width):
     words = text.split()
     lines = []
     current_line = ""
-
+    
     for word in words:
         test_line = current_line + (" " if current_line else "") + word
         w, _ = screen.measure_text(test_line)
-
+        
         if w <= max_width:
             current_line = test_line
         else:
             if current_line:
                 lines.append(current_line)
             current_line = word
-
+    
     if current_line:
         lines.append(current_line)
-
+    
     # Draw lines
     for line in lines:
         screen.text(line, x, y)
         y += 10
-
+    
     return y
 
 
@@ -188,22 +187,22 @@ def mask_password(password):
 def update():
     """Main update loop for WiFi info display"""
     global scroll_y, scroll_target, content_height
-
+    
     try:
         # Calculate the maximum scroll position (content height minus visible area)
         visible_area = 80  # Space between header and footer
         max_scroll = max(0, content_height - visible_area)
-
+        
         # Handle scrolling with button press
         if io.BUTTON_UP in io.pressed:
             scroll_target = max(0, scroll_target - SCROLL_STEP)  # Scroll up
-
+            
         if io.BUTTON_DOWN in io.pressed:
             scroll_target = min(max_scroll, scroll_target + SCROLL_STEP)  # Scroll down
-
+        
         # Ensure scroll target stays within bounds
         scroll_target = max(0, min(max_scroll, scroll_target))
-
+        
         # Smooth scroll animation
         scroll_delta = scroll_target - scroll_y
         if abs(scroll_delta) > 0.1:
@@ -213,46 +212,46 @@ def update():
             scroll_y = max(0, min(max_scroll, scroll_y))
         else:
             scroll_y = scroll_target
-
+            
     except Exception as e:
         print(f"Scroll error: {e}")
         # Reset scroll state if something goes wrong
         scroll_y = 0
         scroll_target = 0
-
+    
     # Clear screen
     screen.brush = background
     screen.draw(shapes.rectangle(0, 0, 160, 120))
-
+    
     # Draw header (fixed position, no scroll)
     screen.font = small_font
     screen.brush = phosphor
     center_text("WiFi Settings", 2)
-
+    
     # Draw line separator (fixed position)
     screen.brush = gray
     screen.draw(shapes.rectangle(5, 13, 150, 1))
-
+    
     # Load credentials
     has_credentials = load_wifi_credentials()
-
+    
     if not has_credentials:
         # No secrets.py found
         screen.font = small_font
         screen.brush = white
         center_text("No Configuration", 25)
-
+        
         screen.brush = gray
         y = wrap_text("Edit 'secrets.py' in disk mode to set WiFi credentials.", 10, 45, 140)
-
+        
     else:
         # Display WiFi info
         screen.font = small_font
         y = 18
-
+        
         # Start scrollable content
         content_y = y
-
+        
         # SSID
         visible_y = content_y - scroll_y  # Convert to screen space
         if visible_y >= 15 and visible_y <= 100:  # Only draw if in visible area
@@ -270,7 +269,7 @@ def update():
                 screen.brush = gray
                 screen.text("Not set", 10, visible_y)
         content_y += 12
-
+        
         # Password
         visible_y = content_y - scroll_y
         if visible_y >= 18 and visible_y <= 100:
@@ -286,7 +285,7 @@ def update():
                 screen.brush = gray
                 screen.text("Not set", 10, visible_y)
         content_y += 12
-
+        
         # GitHub Username
         visible_y = content_y - scroll_y
         if visible_y >= 18 and visible_y <= 100:
@@ -302,7 +301,7 @@ def update():
                 screen.brush = gray
                 screen.text("Not set", 10, visible_y)
         content_y += 12
-
+        
         # Connection status
         check_connection_status()
         visible_y = content_y - scroll_y
@@ -322,7 +321,7 @@ def update():
                 screen.brush = red
             screen.text(connection_status, 10, visible_y)
         content_y += 12
-
+        
         # IP Address
         if connection_status == "Connected":
             visible_y = content_y - scroll_y
@@ -355,7 +354,7 @@ def update():
                     screen.brush = white
                     screen.text(str(channel), 10, visible_y)
             content_y += 12
-
+        
         # Security
         if connection_status == "Connected":
             visible_y = content_y - scroll_y
@@ -375,7 +374,7 @@ def update():
 
         # Update total content height
         content_height = content_y - y
-
+        
         # Draw scroll indicators if needed
         if scroll_y > 0:
             screen.brush = brushes.color(255, 255, 255, 128)
@@ -383,12 +382,14 @@ def update():
         if scroll_y < max_scroll:  # Show down indicator if more content below
             screen.brush = brushes.color(255, 255, 255, 128)
             screen.draw(shapes.rectangle(150, 103, 10, 2))  # Down indicator
-
-    # Draw footer
+        
+        # Debug info
+    
+    # Draw bottom instructions (fixed position)
     screen.font = small_font
     screen.brush = gray
-    screen.text("A:Back", 2, 110)
-    screen.text("C:Scroll", 110, 110)
+    screen.draw(shapes.rectangle(5, 103, 150, 1))
+    center_text("UP/DOWN to scroll", 106)
 
 
 if __name__ == "__main__":
