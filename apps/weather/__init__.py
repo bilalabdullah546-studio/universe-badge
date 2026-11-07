@@ -87,6 +87,7 @@ def wlan_start():
         wlan.active(True)
         
         if wlan.isconnected():
+            connected = True
             return True
         
         wlan.connect(WIFI_SSID, WIFI_PASSWORD)
