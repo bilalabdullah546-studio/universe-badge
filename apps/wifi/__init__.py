@@ -59,18 +59,21 @@ wlan_security_types = {
 def load_wifi_credentials():
     """Load WiFi credentials from secrets.py"""
     global WIFI_SSID, WIFI_PASSWORD, GITHUB_USERNAME
-    
+
+    sys.path.insert(0, "/")
     try:
-        sys.path.insert(0, "/")
         from secrets import WIFI_SSID, WIFI_PASSWORD, GITHUB_USERNAME
-        sys.path.pop(0)
-        return True
     except ImportError:
         WIFI_SSID = None
         WIFI_PASSWORD = None
         GITHUB_USERNAME = None
         return False
+    finally:
+        # The Wi-Fi screen calls this on every update. Always remove the
+        # temporary root path, including when secrets.py is missing.
+        sys.path.pop(0)
 
+    return True
 
 def check_connection_status():
     """Check if currently connected to WiFi and manage connection attempts"""
