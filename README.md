@@ -66,17 +66,20 @@ python3 fetch_sprites.py /Volumes/BADGER  # Downloads directly to badge
 1. Copy `secrets.py.example` to `secrets.py` on the badge
 2. Edit with your WiFi credentials and GitHub username
 3. Fetch Pokedex sprites (see above)
-4. Run `./sync.sh` to deploy to badge (badge must be in disk mode)
-5. Eject and reset badge
+4. Preview deployment changes with `./sync.sh` (dry-run by default)
+5. Apply the sync with `./sync.sh --apply`, then eject and reset the badge
 
 ## Sync to Badge
 
 Put badge in disk mode (double-tap RESET), then:
 
 ```bash
-./sync.sh
+./sync.sh          # Preview only; no files are changed
+./sync.sh --apply  # Type APPLY when prompted to perform the sync
 diskutil unmountDisk force /Volumes/BADGER
 ```
+
+The sync uses `rsync --delete` for the app directory. Review the dry-run output before applying it. The script refuses to continue if the expected `apps/` directory is missing from the target volume.
 
 ## Credits
 
